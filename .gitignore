@@ -1,0 +1,37 @@
+# STM32CubeIDE build output
+/Debug/
+/Release/
+
+# Compiler and linker artifacts
+*.o
+*.obj
+*.d
+*.su
+*.cyclo
+*.elf
+*.axf
+*.map
+*.list
+*.lst
+*.hex
+*.bin
+*.srec
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+*~
+*.swp
+
+# Local IDE and OS metadata
+/.metadata/
+/.idea/
+/.vs/
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Local Codex/agent workspace data
+/.agents/
+/.codex/
