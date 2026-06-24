@@ -21,12 +21,34 @@
 #include "adc.h"
 
 /* USER CODE BEGIN 0 */
+/*
+ * ADC 学习重点：
+ * ADC1 配置为连续扫描 4 个常规通道，并通过 DMA 循环搬运结果。
+ * `hhGetIq.c` 把 DMA 缓冲区解释为两台电机的两相电流采样：
+ * - Rank1: ADC_CHANNEL_8  -> PB0 -> AD_ValueT[0] -> M0 A 相；
+ * - Rank2: ADC_CHANNEL_9  -> PB1 -> AD_ValueT[1] -> M0 B 相；
+ * - Rank3: ADC_CHANNEL_4  -> PA4 -> AD_ValueT[2] -> M1 A 相；
+ * - Rank4: ADC_CHANNEL_5  -> PA5 -> AD_ValueT[3] -> M1 B 相。
+ *
+ * 这里不计算电流，只负责“把模拟电压变成 ADC 计数并持续放入内存”。
+ */
 
 /* USER CODE END 0 */
 
 ADC_HandleTypeDef hadc1;
 DMA_HandleTypeDef hdma_adc1;
 
+/**
+ * @brief 初始化 ADC1 为 4 通道连续扫描模式。
+ *
+ * 配置要点：
+ * - ScanConvMode = ENABLE：按 Rank1~Rank4 顺序扫描多个通道；
+ * - ContinuousConvMode = ENABLE：软件启动后持续转换；
+ * - ExternalTrigConv = ADC_SOFTWARE_START：由 `InitGetIq()` 软件启动；
+ * - NbrOfConversion = 4：每轮转换 4 个采样值。
+ *
+ * @note DMA 配置在 `HAL_ADC_MspInit()` 中完成，真正启动 DMA 在 `InitGetIq()`。
+ */
 /* ADC1 init function */
 void MX_ADC1_Init(void)
 {
@@ -56,6 +78,7 @@ void MX_ADC1_Init(void)
   }
 
   /** Configure Regular Channel
+   *  Rank1：PB0 / ADC_CHANNEL_8，对应 `hhGetIq` 中 M0 A 相电流采样。
   */
   sConfig.Channel = ADC_CHANNEL_8;
   sConfig.Rank = ADC_REGULAR_RANK_1;
@@ -66,6 +89,7 @@ void MX_ADC1_Init(void)
   }
 
   /** Configure Regular Channel
+   *  Rank2：PB1 / ADC_CHANNEL_9，对应 `hhGetIq` 中 M0 B 相电流采样。
   */
   sConfig.Channel = ADC_CHANNEL_9;
   sConfig.Rank = ADC_REGULAR_RANK_2;
@@ -75,6 +99,7 @@ void MX_ADC1_Init(void)
   }
 
   /** Configure Regular Channel
+   *  Rank3：PA4 / ADC_CHANNEL_4，对应 `hhGetIq` 中 M1 A 相电流采样。
   */
   sConfig.Channel = ADC_CHANNEL_4;
   sConfig.Rank = ADC_REGULAR_RANK_3;
@@ -84,6 +109,7 @@ void MX_ADC1_Init(void)
   }
 
   /** Configure Regular Channel
+   *  Rank4：PA5 / ADC_CHANNEL_5，对应 `hhGetIq` 中 M1 B 相电流采样。
   */
   sConfig.Channel = ADC_CHANNEL_5;
   sConfig.Rank = ADC_REGULAR_RANK_4;
@@ -97,6 +123,14 @@ void MX_ADC1_Init(void)
 
 }
 
+/**
+ * @brief ADC1 的底层硬件资源初始化。
+ *
+ * CubeMX/HAL 会在 `MX_ADC1_Init()` 内部调用本函数。
+ * 它完成 ADC 时钟、GPIO 模拟输入和 DMA1_Channel1 的配置。
+ *
+ * @param adcHandle HAL 传入的 ADC 句柄。
+ */
 void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
 {
 
@@ -125,7 +159,10 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-    /* ADC1 DMA Init */
+    /* ADC1 DMA Init
+     * DMA 循环模式保证 4 个 ADC 结果会反复覆盖目标数组，
+     * 这样控制循环读取到的始终是最新一轮采样。
+     */
     /* ADC1 Init */
     hdma_adc1.Instance = DMA1_Channel1;
     hdma_adc1.Init.Direction = DMA_PERIPH_TO_MEMORY;
@@ -148,6 +185,14 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
   }
 }
 
+/**
+ * @brief ADC1 的底层硬件资源反初始化。
+ *
+ * 如果应用关闭 ADC1，本函数会释放 ADC 时钟、模拟输入 GPIO 和 DMA。
+ * 当前正常控制流程不会主动调用它。
+ *
+ * @param adcHandle HAL 传入的 ADC 句柄。
+ */
 void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
 {
 

@@ -39,13 +39,35 @@ extern TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim4;
 
 /* USER CODE BEGIN Private defines */
+/**
+ * @brief 定时器在本工程中的分工。
+ *
+ * - TIM2：PWM 输出主定时器，CH1/2/3 给 M0 A/B/C，CH4 给 M1 A；
+ * - TIM3：PWM 输出辅助定时器，CH1/2 给 M1 B/C；
+ * - TIM4：1 ms 基准定时器，触发 `HAL_TIM_PeriodElapsedCallback()`，
+ *   主循环据此运行传感器刷新和闭环控制。
+ */
 
 /* USER CODE END Private defines */
 
+/**
+ * @brief 初始化 TIM2 PWM 输出通道。
+ */
 void MX_TIM2_Init(void);
+
+/**
+ * @brief 初始化 TIM3 PWM 输出通道。
+ */
 void MX_TIM3_Init(void);
+
+/**
+ * @brief 初始化 TIM4 1 ms 基准定时器。
+ */
 void MX_TIM4_Init(void);
 
+/**
+ * @brief HAL 定时器 GPIO 复用初始化入口。
+ */
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 
 /* USER CODE BEGIN Prototypes */

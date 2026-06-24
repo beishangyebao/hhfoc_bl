@@ -69,6 +69,19 @@ void Error_Handler(void);
 #define M1SDA_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
+/**
+ * @brief 本工程的用户引脚命名说明。
+ *
+ * CubeMX 在上方生成的 `M0SCL_Pin/M0SDA_Pin/M1SCL_Pin/M1SDA_Pin`
+ * 是两颗 AS5600 软件 I2C 的 GPIO：
+ * - M0 AS5600：PB10 = SCL，PB11 = SDA；
+ * - M1 AS5600：PB6  = SCL，PB7  = SDA。
+ *
+ * `PB4_Pin` 当前配置为上拉输入，本次控制主线没有直接使用。
+ *
+ * 这些宏是所有硬件映射的源头之一，阅读 `hhAS5600.c` 和 `gpio.c`
+ * 时要回到这里核对引脚含义。
+ */
 
 /* USER CODE END Private defines */
 

@@ -41,6 +41,13 @@ extern "C" {
 void MX_DMA_Init(void);
 
 /* USER CODE BEGIN Prototypes */
+/**
+ * @brief DMA 学习提示。
+ *
+ * 本工程涉及两条 DMA 配置：
+ * - ADC1 -> 内存：循环模式，把 4 路电流采样持续搬到 `AD_ValueT`；
+ * - 内存 -> USART1_TX：给串口 DMA 发送预留，当前 `Serial_Printf()` 使用阻塞发送。
+ */
 
 /* USER CODE END Prototypes */
 

@@ -1,33 +1,13 @@
-# STM32CubeIDE build output
+# STM32CubeIDE / managed build output
 /Debug/
 /Release/
-
-# Compiler and linker artifacts
-*.o
-*.obj
-*.d
-*.su
-*.cyclo
-*.elf
-*.axf
-*.map
-*.list
-*.lst
-*.hex
-*.bin
-*.srec
-
-# Logs and temporary files
-*.log
-*.tmp
-*.bak
-*~
-*.swp
+/build/
 
 # Local IDE and OS metadata
 /.metadata/
 /.idea/
 /.vs/
+/.vscode/
 .DS_Store
 Thumbs.db
 Desktop.ini
@@ -35,3 +15,29 @@ Desktop.ini
 # Local Codex/agent workspace data
 /.agents/
 /.codex/
+
+# Compiler and linker artifacts
+*.elf
+*.axf
+*.hex
+*.bin
+*.srec
+*.map
+*.list
+*.lst
+*.obj
+*.o
+*.d
+*.su
+*.cyclo
+*.mk
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+*.orig
+*~
+*.swp
+*.user
+*.launch

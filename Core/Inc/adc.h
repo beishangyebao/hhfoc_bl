@@ -41,6 +41,13 @@ extern ADC_HandleTypeDef hadc1;
 void MX_ADC1_Init(void);
 
 /* USER CODE BEGIN Prototypes */
+/**
+ * @brief ADC1 使用的 DMA 句柄。
+ *
+ * 学习本工程电流采样时要把它和 `Core/hhGetIq/hhGetIq.c` 联系起来：
+ * ADC1 连续扫描 4 个通道，DMA1_Channel1 循环搬运到 `AD_ValueT[4]`，
+ * 再由 `hhGetIq` 转换成两台电机的 A/B 相电流。
+ */
 extern DMA_HandleTypeDef hdma_adc1;
 /* USER CODE END Prototypes */
 

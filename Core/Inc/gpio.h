@@ -39,6 +39,15 @@ extern "C" {
 void MX_GPIO_Init(void);
 
 /* USER CODE BEGIN Prototypes */
+/**
+ * @brief GPIO 学习提示。
+ *
+ * `MX_GPIO_Init()` 会把 AS5600 的四个引脚配置为开漏输出：
+ * - PB10/PB11：M0 的软件 I2C SCL/SDA；
+ * - PB6/PB7：M1 的软件 I2C SCL/SDA。
+ *
+ * `hhAS5600.c` 通过这些 GPIO 手动拉高/拉低，模拟 I2C 时序。
+ */
 
 /* USER CODE END Prototypes */
 

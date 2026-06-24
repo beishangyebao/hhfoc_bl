@@ -51,6 +51,13 @@
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+/*
+ * 中断学习重点：
+ * 这个文件本身不写控制算法，只是把 CPU/外设中断交给 HAL。
+ * 真正的用户逻辑分散在 HAL 回调中：
+ * - TIM4 更新中断 -> HAL_TIM_PeriodElapsedCallback()，定义在 main.c；
+ * - USART1 接收事件 -> HAL_UARTEx_RxEventCallback()，定义在 hhSerial.c。
+ */
 
 /* USER CODE END 0 */
 
@@ -200,7 +207,13 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
-  * @brief This function handles TIM4 global interrupt.
+  * @brief TIM4 全局中断入口。
+  *
+  * TIM4 是本工程的 1 ms 控制节拍定时器。
+  * 本函数只调用 HAL 中断处理，HAL 随后会进入 `main.c` 中的
+  * `HAL_TIM_PeriodElapsedCallback()`，在那里把 `Flag_1ms` 置 1。
+  *
+  * This function handles TIM4 global interrupt.
   */
 void TIM4_IRQHandler(void)
 {
@@ -214,7 +227,13 @@ void TIM4_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles USART1 global interrupt.
+  * @brief USART1 全局中断入口。
+  *
+  * USART1 用于接收上位机目标值。这里交给 HAL 处理后，
+  * 接收到空闲帧时会进入 `hhSerial.c` 中的 `HAL_UARTEx_RxEventCallback()`，
+  * 由该回调解析浮点目标。
+  *
+  * This function handles USART1 global interrupt.
   */
 void USART1_IRQHandler(void)
 {

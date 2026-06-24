@@ -21,12 +21,30 @@
 #include "usart.h"
 
 /* USER CODE BEGIN 0 */
+/*
+ * USART 学习重点：
+ * USART1 是本工程与上位机/串口助手交互的通道。
+ * `hhSerial.c` 在它上面封装了两件事：
+ * - `Serial_Printf()`：发送调试字符串；
+ * - `HAL_UARTEx_RxEventCallback()`：收到一帧目标值后解析浮点数。
+ */
 
 /* USER CODE END 0 */
 
 UART_HandleTypeDef huart1;
 DMA_HandleTypeDef hdma_usart1_tx;
 
+/**
+ * @brief 初始化 USART1。
+ *
+ * 当前配置：
+ * - BaudRate = 576000；
+ * - 8 位数据位、1 位停止位、无校验；
+ * - TX/RX 双向模式；
+ * - 不使用硬件流控。
+ *
+ * @note `hhSerial.c` 会调用 ReceiveToIdle 中断接收，所以 USART1_IRQn 必须启用。
+ */
 /* USART1 init function */
 
 void MX_USART1_UART_Init(void)
@@ -57,6 +75,22 @@ void MX_USART1_UART_Init(void)
 
 }
 
+/**
+ * @brief USART1 底层 GPIO、DMA 和中断初始化。
+ *
+ * GPIO 映射：
+ * - PA9  -> USART1_TX；
+ * - PA10 -> USART1_RX。
+ *
+ * DMA：
+ * - DMA1_Channel4 配给 USART1_TX，当前 `Serial_Printf()` 实际使用阻塞发送，
+ *   DMA 发送代码被注释保留。
+ *
+ * 中断：
+ * - USART1_IRQn 用于接收完成/空闲事件，最终进入 `hhSerial.c` 的回调。
+ *
+ * @param uartHandle HAL 传入的 UART 句柄。
+ */
 void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
 {
 
@@ -110,6 +144,13 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
   }
 }
 
+/**
+ * @brief USART1 底层资源反初始化。
+ *
+ * 正常控制流程不会主动调用；关闭 USART1 时释放 GPIO、DMA 和中断。
+ *
+ * @param uartHandle HAL 传入的 UART 句柄。
+ */
 void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 {
 

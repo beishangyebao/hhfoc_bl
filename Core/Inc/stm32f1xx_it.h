@@ -58,6 +58,15 @@ void SysTick_Handler(void);
 void TIM4_IRQHandler(void);
 void USART1_IRQHandler(void);
 /* USER CODE BEGIN EFP */
+/**
+ * @brief 中断学习提示。
+ *
+ * 本工程真正和控制流程相关的外设中断主要有两个：
+ * - `TIM4_IRQHandler()`：1 ms 控制节拍来源，最终置位 `Flag_1ms`；
+ * - `USART1_IRQHandler()`：串口接收事件入口，最终进入 `hhSerial.c` 的接收回调。
+ *
+ * 其它异常处理函数主要用于系统故障，不是 FOC 控制主线。
+ */
 
 /* USER CODE END EFP */
 

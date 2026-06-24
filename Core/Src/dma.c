@@ -22,6 +22,13 @@
 #include "dma.h"
 
 /* USER CODE BEGIN 0 */
+/*
+ * DMA 学习重点：
+ * 这里的 `MX_DMA_Init()` 只打开 DMA1 控制器时钟。
+ * 具体 DMA 通道参数不在本函数里配置，而是在各外设 MSP 初始化中配置：
+ * - `adc.c` 的 `HAL_ADC_MspInit()` 配置 DMA1_Channel1 给 ADC1；
+ * - `usart.c` 的 `HAL_UART_MspInit()` 配置 DMA1_Channel4 给 USART1_TX。
+ */
 
 /* USER CODE END 0 */
 
@@ -34,6 +41,10 @@
 /* USER CODE END 1 */
 
 /**
+  * @brief 打开 DMA1 控制器时钟。
+  *
+  * 如果不先打开 DMA 控制器时钟，后续 ADC/USART 的 DMA 通道初始化无法正常工作。
+  *
   * Enable DMA controller clock
   */
 void MX_DMA_Init(void)

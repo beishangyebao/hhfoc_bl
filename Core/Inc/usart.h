@@ -35,9 +35,21 @@ extern "C" {
 extern UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN Private defines */
+/**
+ * @brief USART1 在本工程中的作用。
+ *
+ * USART1 同时用于：
+ * - 接收上位机发送的目标值，`hhSerial.c` 会解析成浮点数；
+ * - 输出调试数据，例如滤波后的 Iq 或速度。
+ *
+ * 当前 CubeMX 配置波特率为 576000，TX=PA9，RX=PA10。
+ */
 
 /* USER CODE END Private defines */
 
+/**
+ * @brief 初始化 USART1 串口。
+ */
 void MX_USART1_UART_Init(void);
 
 /* USER CODE BEGIN Prototypes */
