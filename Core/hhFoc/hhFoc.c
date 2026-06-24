@@ -16,6 +16,7 @@
 #include "../hhPID/hhPID.h"
 #include "../hhGetIq/hhGetIq.h"
 #define _3PI_2 4.71238898038f
+#define _PI    3.14159265358f
 
 /**
  * @file hhFoc.c
@@ -524,25 +525,32 @@ void hhChangeSVpwmModel(){
  * 10. 串口打印初始化完成信息。
  */
 void hhFocInit(float power_supply, int _PP, int _DIR,pwm_mode_t pwmMode) {
+
 	if(pwmMode==PWM_MODE_SPWM){
 		hhChangeSpwmModel();
 	}else{
 		hhChangeSVpwmModel();
 	}
+
 	PP = _PP;
 	DIR = _DIR;
 	voltage_power_supply = power_supply;
+
 	InitPwm();
 	StartSerialITReceive();
 	MyI2C_Init();
 	HAL_TIM_Base_Start_IT(&htim4);
+
 	AS5600M0.DIR=DIR;
 	AS5600M0.hhLowPassFilterVel.Tf=0.01;
 	AS5600M1.DIR=DIR;
 	AS5600M1.hhLowPassFilterVel.Tf=0.01;
+
 	AlignElectricalAngleM0();
 	AlignElectricalAngleM1();
+
 	InitGetIq();
+	
 	Serial_Printf("%s\r\n", "完成PWM初始化设置");
 }
 
@@ -586,6 +594,7 @@ void hhOpenLoopVelM0(float target_velocity){
   float Ts = 1 * 1e-3f;
   // 通过乘以时间间隔和目标速度来计算需要转动的机械角度，存储在 shaft_angle 变量中。在此之前，还需要对轴角度进行归一化，以确保其值在 0 到 2π 之间。
   OpenLoopShaftAngle = _normalizeAngle(OpenLoopShaftAngle + target_velocity*Ts);
+
   float Uq = voltage_power_supply/3;
   SetsetPhaseVoltageM0(Uq,  0, PP * OpenLoopShaftAngle);
 }
@@ -604,25 +613,37 @@ void hhOpenLoopVelM1(float target_velocity){
   float Uq = voltage_power_supply/3;
   SetsetPhaseVoltageM1(Uq,  0, PP * OpenLoopShaftAngle1);
 }
+
+
+
+
+
+
+
+
 ////////////////////////////////////////////////////////
 ////////////////闭环位置//////////////////////////////////
 /**
- * @brief M0 简单比例位置闭环，位置误差直接换算成 Uq。
+ * @brief M0 简单比例位置闭环，位置误差直接换算成 Uq
  *
- * @param Target 目标机械角度，单位 rad。
- * @note 这是早期/简化版本，未使用 `hhPID` 对象，输出限幅固定为 -6~6 V。
+ * @param Target 目标机械角度，单位 rad
+ * @note 这是早期/简化版本，未使用 `hhPID` 对象，输出限幅固定为 -6~6 V
  */
-void hhCloseLoopPos(float Target) {  //闭环位置
+void hhCloseLoopPos(float Target) {  
 		setPhaseVoltage(&Motor0, _constrain(0.133 * (Target-getAngleM0())*180/M_PI,-6,6), 0, _electricalAngle_M0());
 }
 
 /**
- * @brief M1 简单比例位置闭环，位置误差直接换算成 Uq。
- * @param Target 目标机械角度，单位 rad。
+ * @brief M1 简单比例位置闭环，位置误差直接换算成 Uq
+ * @param Target 目标机械角度，单位 rad
  */
 void hhCloseLoopPos1(float Target) {  //闭环位置
 		setPhaseVoltage(&Motor1, _constrain(0.133 * (Target-getAngleM1())*180/M_PI,-6,6), 0, _electricalAngle_M1());
 }
+
+
+
+
 ////////////////////////////////////////////////////////
 ////////////////闭环速度PID//////////////////////////////////
 struct hhPID hhClosLoopVelPID_Obj_M0 ;
@@ -660,7 +681,7 @@ void hhSetCloseLoopVel_PIDM0(float mP, float mI, float mD, float mramp, float ml
  * 5. 用当前 M0 电角度调用 `setPhaseVoltage()` 输出三相 PWM。
  */
 void hhCloseLoopVelM0(float Target) {  //闭环速度
-  setPhaseVoltage(&Motor0, PidRun(&hhClosLoopVelPID_Obj_M0,(Target - GetFilterV_M0()) * 180 / M_PI), 0, _electricalAngle_M0());
+  setPhaseVoltage(&Motor0, PidRun(&hhClosLoopVelPID_Obj_M0,(Target - GetFilterV_M0()) * 180 / _PI), 0, _electricalAngle_M0());
 }
 
 struct hhPID hhClosLoopVelPID_Obj_M1 ;
@@ -681,8 +702,14 @@ void hhSetCloseLoopVel_PIDM1(float mP, float mI, float mD, float mramp, float ml
  * @param Target 目标机械角速度，单位 rad/s。
  */
 void hhCloseLoopVelM1(float Target) {  //闭环速度
-  setPhaseVoltage(&Motor1, PidRun(&hhClosLoopVelPID_Obj_M1,(Target - GetFilterV_M1()) * 180 / M_PI), 0, _electricalAngle_M1());
+  setPhaseVoltage(&Motor1, PidRun(&hhClosLoopVelPID_Obj_M1,(Target - GetFilterV_M1()) * 180 / _PI), 0, _electricalAngle_M1());
 }
+
+
+
+
+
+
 ////////////////////////////////////////////////////////
 ////////////////闭环位置PID//////////////////////////////////
 struct hhPID hhClosLoopPosPID_Obj_M0 ;
@@ -697,7 +724,7 @@ struct hhPID hhClosLoopPosPID_Obj_M0 ;
  * @param mlimit PID 输出幅值限制。
  *
  * @note M0 位置环输出在不同串级结构中含义不同：
- *       直接位置闭环时输出 Uq；位置+速度+Iq 时输出目标速度。
+ *       直接位置闭环时输出 Uq；位置+速度+Iq 时输出目标速度
  */
 void hhSetCloseLoopPos_PIDM0(float mP, float mI, float mD, float mramp, float mlimit) {
 	hhClosLoopPosPID_Obj_M0.P = mP;
@@ -710,11 +737,11 @@ void hhSetCloseLoopPos_PIDM0(float mP, float mI, float mD, float mramp, float ml
 /**
  * @brief M0 位置闭环，位置误差经 PID 后直接作为 Uq 输出。
  *
- * @param Target 目标机械角度，单位 rad。
- * @note 函数旁原注释写“闭环速度”，但从误差 `(Target-getAngleM0())` 看实际是位置闭环。
+ * @param Target 目标机械角度，单位 rad
+ * @note 函数旁原注释写“闭环速度”，但从误差 `(Target-getAngleM0())` 看实际是位置闭环
  */
-void hhCloseLoopPosM0(float Target) {  //闭环速度
-  setPhaseVoltage(&Motor0, PidRun(&hhClosLoopPosPID_Obj_M0,(Target-getAngleM0())*180/M_PI), 0, _electricalAngle_M0());
+void hhCloseLoopPosM0(float Target) {  
+  setPhaseVoltage(&Motor0, PidRun(&hhClosLoopPosPID_Obj_M0,(Target-getAngleM0())*180/_PI), 0, _electricalAngle_M0());
 }
 
 struct hhPID hhClosLoopPosPID_Obj_M1 ;
@@ -731,16 +758,20 @@ void hhSetCloseLoopPos_PIDM1(float mP, float mI, float mD, float mramp, float ml
 }
 
 /**
- * @brief M1 位置闭环，位置误差经 PID 后直接作为 Uq 输出。
- * @param Target 目标机械角度，单位 rad。
+ * @brief M1 位置闭环，位置误差经 PID 后直接作为 Uq 输出
+ * @param Target 目标机械角度，单位 rad
  */
-void hhCloseLoopPosM1(float Target) {  //闭环速度
+void hhCloseLoopPosM1(float Target) {  
   setPhaseVoltage(&Motor1, PidRun(&hhClosLoopPosPID_Obj_M1,(Target-getAngleM1())*180/M_PI), 0, _electricalAngle_M1());
 }
+
+
+
+
 ////////////////////////////////////////////////////////
 ////////////////刷新传感器函数//////////////////////////////////
 /**
- * @brief 在 1 ms 控制节拍中刷新所有反馈量。
+ * @brief 在 1 ms 控制节拍中刷新所有反馈量
  *
  * 所在流程：
  * `main.c` 的 while 循环检测到 `Flag_1ms` 后调用本函数。
@@ -758,6 +789,10 @@ void UpdateAllSensor(){
 	IqSensorUpdateM1(_electricalAngle_M1());//电机1 Iq电流获取
 	IqSensorUpdateM0(_electricalAngle_M0());//电机0 Iq电流获取
 }
+
+
+
+
 ////////////////////////////////////////////////////////
 ////////////////闭环Iq PID//////////////////////////////////
 struct hhPID hhClosLoopIqPID_Obj_M0 ;
@@ -790,14 +825,14 @@ void hhSetCloseLoopIq_PIDM0(float mP, float mI, float mD, float mramp, float mli
  * 3. Iq PID 输出 q 轴电压 Uq；
  * 4. 按当前电角度输出三相 PWM。
  */
-void hhCloseLoopIqM0(float Target) {  //闭环速度
+void hhCloseLoopIqM0(float Target) {  
   setPhaseVoltage(&Motor0, PidRun(&hhClosLoopIqPID_Obj_M0,Target - GetFilterIqM0() ), 0, _electricalAngle_M0());
 }
 
 struct hhPID hhClosLoopIqPID_Obj_M1 ;
 
 /**
- * @brief 设置 M1 Iq 电流环 PID 参数。
+ * @brief 设置 M1 Iq 电流环 PID 参数
  */
 void hhSetCloseLoopIq_PIDM1(float mP, float mI, float mD, float mramp, float mlimit) {
 	hhClosLoopIqPID_Obj_M1.P = mP;
@@ -814,10 +849,13 @@ void hhSetCloseLoopIq_PIDM1(float mP, float mI, float mD, float mramp, float mli
 void hhCloseLoopIqM1(float Target) {  //闭环速度
   setPhaseVoltage(&Motor1, PidRun(&hhClosLoopIqPID_Obj_M1,Target - GetFilterIqM1() ), 0, _electricalAngle_M1());
 }
+
+
+
 ////////////////////////////////////////////////////////
 ////////////////闭环速度 闭环Iq PID//////////////////////////////////
 /**
- * @brief M0 速度环 + Iq 电流环串级闭环。
+ * @brief M0 速度环 + Iq 电流环串级闭环
  *
  * @param Target 目标机械角速度，单位 rad/s。
  *
@@ -825,11 +863,14 @@ void hhCloseLoopIqM1(float Target) {  //闭环速度
  * - 外环：速度误差 -> 速度 PID -> 目标 Iq；
  * - 内环：目标 Iq - 实际 Iq -> Iq PID -> Uq -> PWM。
  *
- * 这样比“速度 PID 直接输出 Uq”更接近真实电机控制，因为内层电流环会约束转矩电流。
+ * 这样比“速度 PID 直接输出 Uq”更接近真实电机控制，因为内层电流环会约束转矩电流 
  */
 void hhCloseLoopVel_WithIqM0(float Target) {  //带电流环的闭环速度
-  // setPhaseVoltage(&Motor0, PidRun(&hhClosLoopVelPID_Obj_M0,(Target - GetFilterV_M0()) * 180 / M_PI), 0, _electricalAngle_M0());//改进前
-  hhCloseLoopIqM0(PidRun(&hhClosLoopVelPID_Obj_M0,(Target - GetFilterV_M0()) * 180 / M_PI)) ;//改进后
+
+  // setPhaseVoltage(&Motor0, PidRun(&hhClosLoopVelPID_Obj_M0,(Target - GetFilterV_M0()) * 180 / M_PI), 0, _electricalAngle_M0())
+
+  // 电流环所需要的电流目标值由速度环 PID 输出
+  hhCloseLoopIqM0(PidRun(&hhClosLoopVelPID_Obj_M0,(Target - GetFilterV_M0()) * 180 / _PI)) ;//改进后
 }
 
 /**
@@ -838,24 +879,31 @@ void hhCloseLoopVel_WithIqM0(float Target) {  //带电流环的闭环速度
  */
 void hhCloseLoopVel_WithIqM1(float Target) {  //带电流环的闭环速度
   // setPhaseVoltage(&Motor0, PidRun(&hhClosLoopVelPID_Obj_M0,(Target - GetFilterV_M0()) * 180 / M_PI), 0, _electricalAngle_M0());//改进前
-  hhCloseLoopIqM1(PidRun(&hhClosLoopVelPID_Obj_M1,(Target - GetFilterV_M1()) * 180 / M_PI)) ;//改进后
+  hhCloseLoopIqM1(PidRun(&hhClosLoopVelPID_Obj_M1,(Target - GetFilterV_M1()) * 180 / _PI)) ;//改进后
 }
+
+
+
+
+
 ////////////////////////////////////////////////////////
 ////////////////闭环位置 闭环Iq PID//////////////////////////////////
 /**
- * @brief M0 位置环 + Iq 电流环串级闭环。
+ * @brief M0 位置环 + Iq 电流环串级闭环
  *
- * @param Target 目标机械角度，单位 rad。
+ * @param Target 目标机械角度，单位 rad
  *
  * 串级关系：
  * - 外环：位置误差 -> 位置 PID -> 目标 Iq；
- * - 内环：目标 Iq -> Iq PID -> Uq -> PWM。
+ * - 内环：目标 Iq -> Iq PID -> Uq -> PWM
  *
- * @note 该结构省略速度环，位置环输出直接当作电流目标。
+ * @note 该结构省略速度环，位置环输出直接当作电流目标
  */
 void hhCloseLoopPos_WithIqM0(float Target) {  //带电流环的闭环位置
   //  setPhaseVoltage(&Motor0, PidRun(&hhClosLoopPosPID_Obj_M0,(Target-getAngleM0())*180/M_PI), 0, _electricalAngle_M0());//改进前
-	hhCloseLoopIqM0(PidRun(&hhClosLoopPosPID_Obj_M0,(Target-getAngleM0())*180/M_PI));  //改进后
+
+
+	hhCloseLoopIqM0(PidRun(&hhClosLoopPosPID_Obj_M0,(Target-getAngleM0())*180/_PI));  //改进后
 }
 
 /**
@@ -864,8 +912,11 @@ void hhCloseLoopPos_WithIqM0(float Target) {  //带电流环的闭环位置
  */
 void hhCloseLoopPos_WithIqM1(float Target) {  //带电流环的闭环位置
   //  setPhaseVoltage(&Motor0, PidRun(&hhClosLoopPosPID_Obj_M0,(Target-getAngleM0())*180/M_PI), 0, _electricalAngle_M0());//改进前
-	hhCloseLoopIqM1(PidRun(&hhClosLoopPosPID_Obj_M1,(Target-getAngleM1())*180/M_PI));  //改进后
+	hhCloseLoopIqM1(PidRun(&hhClosLoopPosPID_Obj_M1,(Target-getAngleM1())*180/_PI));  //改进后
 }
+
+
+
 ////////////////////////////////////////////////////////
 ////////////////闭环位置 闭环速度 闭环Iq PID//////////////////////////////////
 /**
@@ -884,7 +935,7 @@ void hhCloseLoopPos_WithIqM1(float Target) {  //带电流环的闭环位置
  * @note 位置误差乘 `180/π`，实际是把 rad 量纲转换为 degree 尺度后再进入 PID。
  */
 void hhCloseLoopPos_WithVelIqM0(float Target) {
-	hhCloseLoopIqM0(PidRun(&hhClosLoopVelPID_Obj_M0,PidRun(&hhClosLoopPosPID_Obj_M0,(Target-getAngleM0())*180/M_PI)-GetFilterV_M0()));
+	hhCloseLoopIqM0(PidRun(&hhClosLoopVelPID_Obj_M0,PidRun(&hhClosLoopPosPID_Obj_M0,(Target-getAngleM0())*180/_PI)-GetFilterV_M0()));
 }
 
 /**
@@ -892,7 +943,7 @@ void hhCloseLoopPos_WithVelIqM0(float Target) {
  * @param Target 目标机械角度，单位 rad。
  */
 void hhCloseLoopPos_WithVelIqM1(float Target) {
-	hhCloseLoopIqM1(PidRun(&hhClosLoopVelPID_Obj_M1,PidRun(&hhClosLoopPosPID_Obj_M1,(Target-getAngleM1())*180/M_PI)-GetFilterV_M1()));
+	hhCloseLoopIqM1(PidRun(&hhClosLoopVelPID_Obj_M1,PidRun(&hhClosLoopPosPID_Obj_M1,(Target-getAngleM1())*180/_PI)-GetFilterV_M1()));
 }
 
 
