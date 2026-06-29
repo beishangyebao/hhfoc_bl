@@ -1,11 +1,3 @@
-/*
- * hhFoc.c
- *
- *  Created on: Mar 12, 2025
- *      Author: KingPC
- */
-
-
 
 #include"hhFoc.h"
 #include"math.h"

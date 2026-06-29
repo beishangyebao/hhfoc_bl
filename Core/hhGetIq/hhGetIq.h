@@ -1,9 +1,3 @@
-/*
- * hhGetIq.h
- *
- *  Created on: Mar 16, 2025
- *      Author: KingPC
- */
 
 #ifndef HHGETIQ_HHGETIQ_H_
 #define HHGETIQ_HHGETIQ_H_

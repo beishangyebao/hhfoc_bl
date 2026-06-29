@@ -1,9 +1,3 @@
-/*
- * hhFoc.h
- *
- *  Created on: Mar 12, 2025
- *      Author: KingPC
- */
 
 #ifndef HHFOC_HHFOC_H_
 #define HHFOC_HHFOC_H_

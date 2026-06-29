@@ -1,9 +1,3 @@
-/*
- * hhSerial.c
- *
- *  Created on: Mar 11, 2025
- *      Author: KingPC
- */
 
 
 #include <stdarg.h>

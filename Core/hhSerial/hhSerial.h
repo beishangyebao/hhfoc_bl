@@ -1,9 +1,3 @@
-/*
- * hhSerial.h
- *
- *  Created on: Mar 11, 2025
- *      Author: KingPC
- */
 
 #ifndef HHSERIAL_HHSERIAL_H_
 #define HHSERIAL_HHSERIAL_H_

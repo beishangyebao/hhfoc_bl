@@ -1,9 +1,3 @@
-/*
- * hhLowPassFilter.h
- *
- *  Created on: Mar 15, 2025
- *      Author: KingPC
- */
 
 #ifndef HHLOWPASSFILTER_HHLOWPASSFILTER_H_
 #define HHLOWPASSFILTER_HHLOWPASSFILTER_H_
